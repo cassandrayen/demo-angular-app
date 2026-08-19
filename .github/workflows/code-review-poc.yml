@@ -38,7 +38,7 @@ jobs:
           reporter: github-pr-review # Posts inline comments directly on the PR diff
           level: warning
           filter_mode: added # Only checks newly added/modified lines in the PR
-          fails_on_error: false # <--- Prevents exit code 1 from failing the job
+          fail_on_error: false # <--- Prevents exit code 1 from failing the job
 
   # Job 2: Open-Source AI Code Reviewer (PR-Agent)
   pr-agent-ai-review:
