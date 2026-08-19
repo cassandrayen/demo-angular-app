@@ -3,6 +3,8 @@ name: Automated Code Review POC
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -29,7 +31,7 @@ jobs:
 
       # Steps to install ESLint globally on the GitHub runner
       - name: Install ESLint
-        run: npm install -g eslint
+        run: npm install -g eslint@8
 
       - name: Run ESLint with Reviewdog
         uses: reviewdog/action-eslint@v1

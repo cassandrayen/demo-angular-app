@@ -1,5 +1,5 @@
 // eslint.config.js
-module.exports = [
+export default [
     {
         files: ["**/*.js", "**/*.ts"],
         rules: {
