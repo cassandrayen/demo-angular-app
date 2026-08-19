@@ -27,6 +27,10 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
+      # Steps to install ESLint globally on the GitHub runner
+      - name: Install ESLint
+        run: npm install -g eslint
+
       - name: Run ESLint with Reviewdog
         uses: reviewdog/action-eslint@v1
         with:
@@ -34,7 +38,6 @@ jobs:
           reporter: github-pr-review # Posts inline comments directly on the PR diff
           level: warning
           filter_mode: added # Only checks newly added/modified lines in the PR
-          install_eslint: true # <--- Fixes 'eslint: not found'
 
   # Job 2: Open-Source AI Code Reviewer (PR-Agent)
   pr-agent-ai-review:
@@ -44,7 +47,7 @@ jobs:
     if: ${{ always() }} # <--- Ensure AI review runs even if the linter fails
     steps:
       - name: Run PR-Agent Review
-        uses: the-pr-agent/pr-agent-action@main # <--- Fixes 'repository not found'
+        uses: the-pr-agent/pr-agent@main # <--- Fixes 'repository not found'
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
