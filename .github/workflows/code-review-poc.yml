@@ -39,6 +39,7 @@ jobs:
           level: warning
           filter_mode: added # Only checks newly added/modified lines in the PR
           fail_level: false # <--- Prevents exit code 1 from failing the job
+          eslint_flags: '--no-config-lookup' # Prevents exit code 2 when config file is missing
 
   # Job 2: Open-Source AI Code Reviewer (PR-Agent)
   pr-agent-ai-review:
