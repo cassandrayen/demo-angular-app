@@ -1,0 +1,52 @@
+name: Automated Code Review POC
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write # Required for Reviewdog and PR-Agent to comment on PRs
+  checks: write
+
+jobs:
+  # Job 1: Fast Linter with Direct PR Inline Comments
+  linter-inline-review:
+    name: Reviewdog Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint with Reviewdog
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review # Posts inline comments directly on the PR diff
+          level: warning
+          filter_mode: added # Only checks newly added/modified lines in the PR
+
+  # Job 2: Open-Source AI Code Reviewer (PR-Agent)
+  pr-agent-ai-review:
+    name: PR-Agent AI Review
+    runs-on: ubuntu-latest
+    needs: linter-inline-review
+    steps:
+      - name: Run PR-Agent Review
+        uses: qodo-ai/pr-agent-action@main
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          github_action_config: |
+            auto_describe: true
+            auto_review: true
+            auto_improve: true
