@@ -25,7 +25,7 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Run ESLint with Reviewdog
         uses: reviewdog/action-eslint@v1
@@ -34,16 +34,17 @@ jobs:
           reporter: github-pr-review # Posts inline comments directly on the PR diff
           level: warning
           filter_mode: added # Only checks newly added/modified lines in the PR
+          install_eslint: true # <--- Fixes 'eslint: not found'
 
   # Job 2: Open-Source AI Code Reviewer (PR-Agent)
   pr-agent-ai-review:
     name: PR-Agent AI Review
     runs-on: ubuntu-latest
     needs: linter-inline-review
-    if: ${{ always() }} # <--- Add this line so it runs even if the linter fails
+    if: ${{ always() }} # <--- Ensure AI review runs even if the linter fails
     steps:
       - name: Run PR-Agent Review
-        uses: qodo-ai/pr-agent-action@main
+        uses: the-pr-agent/pr-agent-action@main # <--- Fixes 'repository not found'
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
