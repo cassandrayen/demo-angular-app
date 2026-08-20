@@ -17,11 +17,6 @@ jobs:
       checks: write 
     name: Run PR Agent
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: PR Agent action step
         id: pragent
         uses: the-pr-agent/pr-agent@main
@@ -29,9 +24,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_ACTION_CONFIG: |
-            auto_review: true
-            auto_describe: true
-            model: "gemini/gemini-3.6-flash"
-          # CONFIG.MODEL: "gemini/gemini-3.6-flash"
-          # CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
+          CONFIG.MODEL: "gemini/gemini-3.6-flash"
+          CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
