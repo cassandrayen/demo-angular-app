@@ -1,8 +1,6 @@
-name: Automated Code Review POC
-
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
   issue_comment:
     types: [created]
 
@@ -12,39 +10,8 @@ permissions:
   checks: write
 
 jobs:
-  # Job 1: Fast Linter with Direct PR Inline Comments
-  # linter-inline-review:
-  #   name: Reviewdog Linter
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true # <--- Add this line to allow the pipeline to proceed
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-
-  #     - name: Install Dependencies
-  #       run: npm install --legacy-peer-deps
-
-  #     # Steps to install ESLint globally on the GitHub runner
-  #     - name: Install ESLint
-  #       run: npm install -g eslint@8
-
-  #     - name: Run ESLint with Reviewdog
-  #       uses: reviewdog/action-eslint@v1
-  #       with:
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         reporter: github-pr-review # Posts inline comments directly on the PR diff
-  #         level: warning
-  #         filter_mode: added # Only checks newly added/modified lines in the PR
-  #         fail_level: false # <--- Prevents exit code 1 from failing the job
-
-  # Job 2: Open-Source AI Code Reviewer (PR-Agent)
-  pr-agent-ai-review:
-    name: PR-Agent AI Review
+  pr_agent_job:
+    if: ${{ github.event.sender.type != 'Bot' }}
     runs-on: ubuntu-latest
     # needs: linter-inline-review
     if: ${{ always() }} # <--- Ensure AI review runs even if the linter fails
