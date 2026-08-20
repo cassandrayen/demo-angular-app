@@ -8,6 +8,10 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
+interface UserProfile {
+  id: number;
+  username: string; // Required property
+}
 export class AppComponent {
   title: number = 'demo-angular-app';
 }
