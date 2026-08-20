@@ -29,7 +29,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_ACTION_CONFIG: 
+          GITHUB_ACTION_CONFIG: |
             auto_review: true
             auto_describe: true
             model: "gemini/gemini-3.6-flash"
