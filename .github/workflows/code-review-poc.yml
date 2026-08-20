@@ -1,28 +1,28 @@
+name: AI PR Reviewer
+
 on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
   issue_comment:
     types: [created]
 
-permissions:
-  contents: read
-  pull-requests: write # Required for Reviewdog and PR-Agent to comment on PRs
-  checks: write
-
 jobs:
   pr_agent_job:
     if: ${{ github.event.sender.type != 'Bot' }}
     runs-on: ubuntu-latest
-    # needs: linter-inline-review
-    if: ${{ always() }} # <--- Ensure AI review runs even if the linter fails
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+      checks: write 
+    name: Run PR Agent
     steps:
-      - name: Run PR-Agent Review
-        uses: the-pr-agent/pr-agent@main # <--- Fixes 'repository not found'
+      - name: PR Agent action step
+        id: pragent
+        uses: the-pr-agent/pr-agent@main
+        continue-on-error: true
         env:
-          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          github_action_config: |
-            auto_describe: true
-            auto_review: true
-            auto_improve: true
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CONFIG.MODEL: "gemini/gemini-3.6-flash"
+          CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
