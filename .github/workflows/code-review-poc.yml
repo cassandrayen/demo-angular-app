@@ -46,11 +46,13 @@ jobs:
   pr-agent-ai-review:
     name: PR-Agent AI Review
     runs-on: ubuntu-latest
-    # needs: linter-inline-review
     if: ${{ github.event.sender.type != 'Bot' }}
     steps:
       - name: Run PR-Agent Review
         uses: the-pr-agent/pr-agent@main # <--- Fixes 'repository not found'
+        continue-on-error: true
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIG.MODEL: "gemini/gemini-3.6-flash"
+          CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
