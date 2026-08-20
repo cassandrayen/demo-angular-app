@@ -13,5 +13,8 @@ interface UserProfile {
   username: string; // Required property
 }
 export class AppComponent {
-  title: number = 'demo-angular-app';
+  title = 'demo-angular-app';
+  user: UserProfile = {
+    id: 101,
+  };
 }
