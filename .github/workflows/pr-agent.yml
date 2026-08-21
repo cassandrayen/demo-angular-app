@@ -38,8 +38,7 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url || github.event.issue.html_url }}
         run: |
           echo "Fetching all PR comments..."
-          # Fetch ALL comment bodies on the PR, bypassing the bot name issue
-          ALL_COMMENTS=$(gh pr view $PR_URL --json comments --jq '.comments[].body')
+          ALL_COMMENTS=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login | startswith("github-actions"))) | .[].body')
           
           echo "Scanning comments for compilation errors..."
           
