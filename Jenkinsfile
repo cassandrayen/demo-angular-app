@@ -3,7 +3,7 @@ pipeline {
     
     // This tells Jenkins to use Node.js (requires the NodeJS plugin in Jenkins)
     tools {
-        nodejs 'Node16' // This name must match the tool configuration in your Jenkins server
+        nodejs 'Node18' // This name must match the tool configuration in your Jenkins server
     }
 
     stages {
