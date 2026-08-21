@@ -26,6 +26,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CONFIG.MODEL: "gemini/gemini-3.6-flash"
           CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_improve: "true"
+          # Add this line to force reviews on new commits!
+          github_action_config.handle_push_trigger: "true"
 
       - name: Evaluate AI Feedback
         env:
