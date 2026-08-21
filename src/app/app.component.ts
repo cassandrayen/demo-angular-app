@@ -10,13 +10,4 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title: string = 'demo-angular-app';
-
-  ngOnInit(): void {
-    // Leave this completely empty
-  }
-
-  testLintFailure() {
-    const myUselessVariable = "I am never used anywhere!";
-    // Do not `console.log` it or return it. Just leave it here.
-  }
 }
