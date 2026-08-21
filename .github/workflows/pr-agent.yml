@@ -20,10 +20,10 @@ jobs:
       - name: PR Agent action step
         id: pragent
         uses: the-pr-agent/pr-agent@main
-        continue-on-error: true
+        # continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CONFIG.MODEL: "gemini/gemini-3.6-flash"
           CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
           github_action_config.auto_review: "true"
@@ -35,7 +35,7 @@ jobs:
       - name: Evaluate AI Feedback
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ github.event.pull_request.html_url || github.event.issue.html_url }}
         run: |
           echo "Fetching PR comments..."
           # Fetch the body of the most recent comment made by the github-actions bot
