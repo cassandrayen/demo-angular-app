@@ -9,7 +9,7 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title: number = 'demo-angular-app';
+  title: string = 'demo-angular-app';
 
   ngOnInit(): void {
     // Leave this completely empty
