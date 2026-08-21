@@ -27,6 +27,26 @@ jobs:
           CONFIG.MODEL: "gemini/gemini-3.6-flash"
           CONFIG.FALLBACK_MODELS: '["gemini/gemini-3.6-flash"]'
 
+      - name: Evaluate AI Feedback
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          echo "Fetching PR comments..."
+          # Fetch the body of the most recent comment made by the github-actions bot
+          LATEST_COMMENT=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login == "github-actions")) | last | .body')
+          
+          echo "Scanning AI comment for critical issues..."
+          
+          # Check if the comment contains the "Impact: High" table column or "Possible issue"
+          if echo "$LATEST_COMMENT" | grep -qi "High"; then
+            echo "❌ ERROR: The AI PR Agent detected a High Impact issue (such as a compilation error). Blocking merge!"
+            exit 1
+          else
+            echo "✅ SUCCESS: No High Impact issues detected by the AI."
+            exit 0
+          fi
+
   lint_code_job:
     name: ESLint & Code Quality
     # We only want this to run on code pushes, not when someone types /review
