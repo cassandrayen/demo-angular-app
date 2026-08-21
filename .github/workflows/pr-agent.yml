@@ -37,14 +37,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url || github.event.issue.html_url }}
         run: |
-          echo "Fetching PR comments..."
-          # Fetch the body of the most recent comment made by the github-actions bot
-          LATEST_COMMENT=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login == "github-actions")) | last | .body')
+          echo "Fetching all PR comments..."
+          # Fetch ALL comment bodies on the PR, bypassing the bot name issue
+          ALL_COMMENTS=$(gh pr view $PR_URL --json comments --jq '.comments[].body')
           
-          echo "Scanning AI comment for compilation errors..."
+          echo "Scanning comments for compilation errors..."
           
-          # Search for specific phrases the AI uses when the code is broken
-          if echo "$LATEST_COMMENT" | grep -qiE "compilation error|prevents the application from building|TS[0-9]{4}"; then
+          if echo "$ALL_COMMENTS" | grep -qiE "compilation error|prevents the application from building|TS[0-9]{4}"; then
             echo "❌ ERROR: The AI detected a TypeScript compilation error! Blocking merge."
             exit 1
           else
