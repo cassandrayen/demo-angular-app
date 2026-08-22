@@ -9,6 +9,10 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types, @typescript-eslint/no-explicit-any
-  public title: number = 'demo-angular-app' as any;
+  public title = 'demo';
+
+  public calculateTotal(): void {
+    // ESLint passes this, but TS fails because you cannot multiply a string
+    const result = this.title * 5; 
+  }
 }
