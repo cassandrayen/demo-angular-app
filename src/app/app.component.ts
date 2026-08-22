@@ -9,11 +9,13 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  public title = 'demo';
+  public title = 'demo-angular-app';
 
-  public calculateTotal(): void {
-    // ESLint passes this, but TS fails because you cannot multiply a string
-    const result = this.title * 5; 
-    console.log(result); // <--- Using the variable so ESLint passes!
+  // ESLint PASSES: It just sees a normal function returning a concatenated string.
+  // AI FAILS: It recognizes the context and flags a critical SQL injection risk.
+  public fetchUserData(userInput: string): string {
+    const dbQuery = "SELECT * FROM users WHERE username = '" + userInput + "'";
+    console.log(dbQuery);
+    return dbQuery;
   }
 }
