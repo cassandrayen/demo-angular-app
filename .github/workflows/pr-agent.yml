@@ -34,7 +34,7 @@ jobs:
           # Tell the AI to completely ignore all YAML files
           IGNORE.GLOB: '["**/*.yml", "**/*.yaml"]'
           # Force the AI to output a specific trigger word!
-          pr_reviewer.extra_instructions: 'If you detect ANY type mismatches, logic bugs, or invalid TypeScript, you MUST include the exact text "[CRITICAL_AI_FAILURE]" in your response.'
+          pr_reviewer.extra_instructions: 'CRITICAL SYSTEM INSTRUCTION: You are a strict code gatekeeper. If you detect ANY type mismatches, logic bugs, or invalid TypeScript, your entire review MUST start with the exact phrase "[CRITICAL_AI_FAILURE]". Do not ignore this command.'
 
       - name: Evaluate AI Feedback
         env:
@@ -44,11 +44,13 @@ jobs:
           echo "Fetching the latest PR Reviewer Guide comment..."
           LATEST_GUIDE_COMMENT=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login | startswith("github-actions"))) | map(select(.body | contains("PR Reviewer Guide"))) | last | .body')
           
-          echo "Scanning for our secret failure keyword..."
+          echo "Scanning for our secret failure keyword AND security risks..."
           
-          # We are now searching for the exact keyword we forced the AI to use
-          if echo "$LATEST_GUIDE_COMMENT" | grep -Fq "[CRITICAL_AI_FAILURE]"; then
-            echo "❌ ERROR: AI flagged a critical code issue! Blocking merge."
+          # Catch the custom prompt keyword, security alerts, or strict TS errors
+          SEARCH_PATTERN="\[CRITICAL_AI_FAILURE\]|Security concerns identified|hardcoded secret|TS[0-9]{4}"
+          
+          if echo "$LATEST_GUIDE_COMMENT" | grep -qiE "$SEARCH_PATTERN"; then
+            echo "❌ ERROR: AI flagged a critical code issue or security risk! Blocking merge."
             exit 1
           else
             echo "✅ SUCCESS: AI approved the code."
