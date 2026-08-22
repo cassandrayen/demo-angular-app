@@ -31,6 +31,8 @@ jobs:
           github_action_config.auto_improve: "true"
           # Add this line to force reviews on new commits!
           github_action_config.handle_push_trigger: "true"
+          # Tell the AI to completely ignore all YAML files
+          IGNORE.GLOB: '["**/*.yml", "**/*.yaml"]'
 
       - name: Evaluate AI Feedback
         env:
@@ -50,7 +52,7 @@ jobs:
           
           if echo "$LATEST_GUIDE_COMMENT" | grep -qiE "$SEARCH_PATTERN"; then
             echo "❌ ERROR: The AI detected a TypeScript compilation error in the latest commit! Blocking merge."
-            exit 0
+            exit 1
           else
             echo "✅ SUCCESS: No compilation errors mentioned in the latest AI review."
             exit 0
