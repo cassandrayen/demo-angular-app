@@ -15,7 +15,7 @@ export class AppComponent {
   // AI FAILS: It recognizes the context and flags a critical SQL injection risk.
   public fetchUserData(userInput: string): string {
     const dbQuery = "SELECT * FROM users WHERE username = '" + userInput + "'";
-    console.log(dbQuery);
+    console.log("Executing Query:", dbQuery); // <-- Just add this small text
     return dbQuery;
   }
 }
