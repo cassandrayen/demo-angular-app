@@ -37,16 +37,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url || github.event.issue.html_url }}
         run: |
-          echo "Fetching all PR comments..."
-          ALL_COMMENTS=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login | startswith("github-actions"))) | .[].body')
+          echo "Fetching the latest PR Reviewer Guide comment..."
           
-          echo "Scanning comments for compilation errors..."
+          # 1. Filter for comments from github-actions
+          # 2. Filter for the main "PR Reviewer Guide" comment
+          # 3. Take the 'last' one (which holds the updated edited text for the current commit)
+          LATEST_GUIDE_COMMENT=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login | startswith("github-actions"))) | map(select(.body | contains("PR Reviewer Guide"))) | last | .body')
           
-          if echo "$ALL_COMMENTS" | grep -qiE "compilation error|prevents the application from building|TS[0-9]{4}"; then
-            echo "❌ ERROR: The AI detected a TypeScript compilation error! Blocking merge."
+          echo "Scanning current review for compilation errors..."
+          
+          if echo "$LATEST_GUIDE_COMMENT" | grep -qiE "compilation error|prevents the application from building|TS[0-9]{4}"; then
+            echo "❌ ERROR: The AI detected a TypeScript compilation error in the latest commit! Blocking merge."
             exit 1
           else
-            echo "✅ SUCCESS: No compilation errors mentioned in the AI review."
+            echo "✅ SUCCESS: No compilation errors mentioned in the latest AI review."
             exit 0
           fi
 
