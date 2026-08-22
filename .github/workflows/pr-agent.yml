@@ -42,21 +42,16 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url || github.event.issue.html_url }}
         run: |
           echo "Fetching the latest PR Reviewer Guide comment..."
-          
           LATEST_GUIDE_COMMENT=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login | startswith("github-actions"))) | map(select(.body | contains("PR Reviewer Guide"))) | last | .body')
           
-          echo "Scanning current review for compilation errors..."
+          echo "Scanning for our secret failure keyword..."
           
-          # Construct words dynamically so the literal phrase isn't in this YAML file
-          WORD1="compilation"
-          WORD2="error"
-          SEARCH_PATTERN="${WORD1} ${WORD2}|prevents the application from building|TS[0-9]{4}"
-          
-          if echo "$LATEST_GUIDE_COMMENT" | grep -qiE "$SEARCH_PATTERN"; then
-            echo "❌ ERROR: The AI detected a TypeScript compilation error in the latest commit! Blocking merge."
+          # We are now searching for the exact keyword we forced the AI to use
+          if echo "$LATEST_GUIDE_COMMENT" | grep -Fq "[CRITICAL_AI_FAILURE]"; then
+            echo "❌ ERROR: AI flagged a critical code issue! Blocking merge."
             exit 1
           else
-            echo "✅ SUCCESS: No compilation errors mentioned in the latest AI review."
+            echo "✅ SUCCESS: AI approved the code."
             exit 0
           fi
 
