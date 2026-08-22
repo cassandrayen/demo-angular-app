@@ -9,15 +9,6 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'demo-angular-app';
-
-  public ngOnInit(): void {
-    console.log(this.getAppVersion());
-  }
-
-  // ESLint PASSES: Clean syntax, single quotes, method is used, no linting violations.
-  // AI FAILS: Declares return type 'number', but explicitly returns a 'string' (TS2322).
-  public getAppVersion(): number {
-    return 'v1.0.0';
-  }
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types, @typescript-eslint/no-explicit-any
+  public title: number = 'demo-angular-app' as any;
 }
