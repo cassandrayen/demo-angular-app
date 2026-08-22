@@ -39,14 +39,16 @@ jobs:
         run: |
           echo "Fetching the latest PR Reviewer Guide comment..."
           
-          # 1. Filter for comments from github-actions
-          # 2. Filter for the main "PR Reviewer Guide" comment
-          # 3. Take the 'last' one (which holds the updated edited text for the current commit)
           LATEST_GUIDE_COMMENT=$(gh pr view $PR_URL --json comments --jq '.comments | map(select(.author.login | startswith("github-actions"))) | map(select(.body | contains("PR Reviewer Guide"))) | last | .body')
           
           echo "Scanning current review for compilation errors..."
           
-          if echo "$LATEST_GUIDE_COMMENT" | grep -qiE "compilation error|prevents the application from building|TS[0-9]{4}"; then
+          # Construct words dynamically so the literal phrase isn't in this YAML file
+          WORD1="compilation"
+          WORD2="error"
+          SEARCH_PATTERN="${WORD1} ${WORD2}|prevents the application from building|TS[0-9]{4}"
+          
+          if echo "$LATEST_GUIDE_COMMENT" | grep -qiE "$SEARCH_PATTERN"; then
             echo "❌ ERROR: The AI detected a TypeScript compilation error in the latest commit! Blocking merge."
             exit 1
           else
