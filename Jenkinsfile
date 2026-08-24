@@ -71,6 +71,7 @@ pipeline {
                     
                     # 6. Run the AI reviewer directly
                     pr-agent --pr_url $CHANGE_URL review
+                    pr-agent --pr_url $CHANGE_URL describe
                 '''
             }
         }
