@@ -37,7 +37,7 @@ pipeline {
             }
         }
         
-        // AI PR Review runs ONLY when MR/PR target branch is 'SIT' or 'UAT'
+        // AI PR Review runs ONLY on SIT or UAT target branches
         stage('Run AI PR Review') {
             when {
                 allOf {
@@ -127,26 +127,28 @@ pipeline {
         always {
             script {
                 if (env.CHANGE_ID) {
-                    // 1. Evaluate the build result in Groovy first
+                    // Pass Groovy calculations as clean environment variables to single-quoted sh
                     def isSuccess = (currentBuild.currentResult == 'SUCCESS')
-                    def stateVal = isSuccess ? 'success' : 'failure'
-                    def descVal = isSuccess ? 'Jenkins build passed successfully!' : 'Jenkins build failed.'
-
-                    // 2. Pass the evaluated values directly into the script block
-                    sh """
-                        COMMIT_SHA=\$(git rev-parse HEAD)
-                        PAYLOAD=\$(jq -n --arg state "${stateVal}" \
-                                       --arg target_url "${env.BUILD_URL}console" \
-                                       --arg description "${descVal}" \
-                                       --arg context "jenkins/pr-merge" \
-                                       '{state: \$state, target_url: \$target_url, description: \$description, context: \$context}')
-                        
-                        curl -s -H "Authorization: token ${env.GITHUB_TOKEN}" \
-                             -H "Content-Type: application/json" \
-                             -X POST \
-                             -d "\$PAYLOAD" \
-                             "https://api.github.com/repos/cassandrayen/demo-angular-app/statuses/\${COMMIT_SHA}" || true
-                    """
+                    
+                    withEnv([
+                        "BUILD_STATE=${isSuccess ? 'success' : 'failure'}",
+                        "BUILD_DESC=${isSuccess ? 'Jenkins build passed successfully!' : 'Jenkins build failed.'}"
+                    ]) {
+                        sh '''
+                            COMMIT_SHA=$(git rev-parse HEAD)
+                            PAYLOAD=$(jq -n --arg state "$BUILD_STATE" \
+                                           --arg target_url "${BUILD_URL}console" \
+                                           --arg description "$BUILD_DESC" \
+                                           --arg context "jenkins/pr-merge" \
+                                           '{state: $state, target_url: $target_url, description: $description, context: $context}')
+                            
+                            curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                                 -H "Content-Type: application/json" \
+                                 -X POST \
+                                 -d "$PAYLOAD" \
+                                 "https://api.github.com/repos/cassandrayen/demo-angular-app/statuses/${COMMIT_SHA}" || true
+                        '''
+                    }
                 }
             }
         }
