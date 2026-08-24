@@ -1,15 +1,21 @@
 pipeline {
     agent any
     
-    // This tells Jenkins to use Node.js (requires the NodeJS plugin in Jenkins)
     tools {
-        nodejs 'Node18' // This name must match the tool configuration in your Jenkins server
+        nodejs 'Node18' 
+    }
+
+    environment {
+        // Securely load your credentials
+        GITHUB_TOKEN = credentials('github-token')
+        GEMINI_API_KEY = credentials('gemini-api-key')
+        CONFIG_MODEL = "gemini/gemini-3.6-flash"
+        PR_URL = "https://github.com/${env.GIT_URL_USER}/${env.GIT_URL_REPO}/pull/${env.CHANGE_ID}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Pulls the latest code from GitHub
                 checkout scm
             }
         }
@@ -17,7 +23,16 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing npm packages...'
-                sh 'npm install'
+                // Using legacy-peer-deps to match your previous setup
+                sh 'npm install --legacy-peer-deps'
+            }
+        }
+
+        // NEW: ESLint runs right after install to fail-fast on bad code
+        stage('ESLint & Code Quality') {
+            steps {
+                echo 'Running linting...'
+                sh 'npm run lint'
             }
         }
         
@@ -28,10 +43,29 @@ pipeline {
             }
         }
         
+        // NEW: AI Code Review runs only on Pull Requests
+        stage('Run AI PR Review') {
+            when {
+                // Jenkins automatically populates CHANGE_URL for Pull Requests
+                expression { env.CHANGE_URL != null }
+            }
+            steps {
+                echo "Running PR Agent on ${env.CHANGE_URL}"
+                // Run the official Docker container dynamically
+                sh '''
+                    docker run --rm \
+                    -e GITHUB_TOKEN=$GITHUB_TOKEN \
+                    -e GOOGLE_AI_STUDIO.GEMINI_API_KEY=$GEMINI_API_KEY \
+                    -e CONFIG.MODEL="gemini/gemini-3.6-flash" \
+                    codiumai/pr-agent:latest \
+                    --pr_url $CHANGE_URL review
+                '''
+            }
+        }
+        
         stage('Archive Artifacts') {
             steps {
                 echo 'Saving the build output...'
-                // This saves the compiled Angular app (usually in the dist folder)
                 archiveArtifacts artifacts: 'dist/**/*', allowEmptyArchive: true
             }
         }
