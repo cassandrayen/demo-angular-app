@@ -61,12 +61,13 @@ jobs:
 
   lint_code_job:
     name: ESLint & Code Quality
-    # We only want this to run on code pushes, not when someone types /review
-    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # Dynamically target the PR code for both pushes AND comments
+          ref: refs/pull/${{ github.event.pull_request.number || github.event.issue.number }}/head
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
