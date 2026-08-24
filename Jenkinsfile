@@ -40,10 +40,15 @@ pipeline {
         // 1. AI PR Review runs FIRST
         stage('Run AI PR Review') {
             when {
-                expression { env.CHANGE_URL != null }
+                allOf {
+                    expression { env.CHANGE_URL != null }
+                    anyOf {
+                        expression { env.CHANGE_TARGET =~ /^(SIT|UAT)$/ }
+                    }
+                }
             }
             steps {
-                echo "Running PR Agent on ${env.CHANGE_URL}"
+                echo "PR target branch is ${env.CHANGE_TARGET}. Running PR Agent on ${env.CHANGE_URL}..."
                 sh '''
                     export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin
                     python3.12 -m venv pr-agent-env
