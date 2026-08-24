@@ -55,15 +55,18 @@ pipeline {
                     python3 -m venv pr-agent-env
                     source pr-agent-env/bin/activate
                     
-                    # 2. Install the official PR Agent CLI package
-                    pip install pr-agent
+                    # 2. Upgrade pip to fix the version warning and resolve metadata correctly
+                    python3 -m pip install --upgrade pip
                     
-                    # 3. Export your required environment variables
+                    # 3. Bypassing PyPI: Install directly from the official GitHub repository
+                    pip install "pr-agent @ git+https://github.com/The-PR-Agent/pr-agent.git@v0.42.0"
+                    
+                    # 4. Export your required environment variables
                     export GITHUB_TOKEN=$GITHUB_TOKEN
                     export GOOGLE_AI_STUDIO.GEMINI_API_KEY=$GEMINI_API_KEY
                     export CONFIG.MODEL="gemini/gemini-3.6-flash"
                     
-                    # 4. Run the AI reviewer directly
+                    # 5. Run the AI reviewer directly
                     pr-agent --pr_url $CHANGE_URL review
                 '''
             }
