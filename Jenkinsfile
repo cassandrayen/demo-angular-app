@@ -127,28 +127,26 @@ pipeline {
         always {
             script {
                 if (env.CHANGE_ID) {
-                    sh '''
-                        COMMIT_SHA=$(git rev-parse HEAD)
-                        if [ "$BUILD_STATUS" = "SUCCESS" ] || [ "$currentBuild.currentResult" = "SUCCESS" ]; then
-                            STATE="success"
-                            DESC="Jenkins build passed successfully!"
-                        else
-                            STATE="failure"
-                            DESC="Jenkins build failed."
-                        fi
+                    // 1. Evaluate the build result in Groovy first
+                    def isSuccess = (currentBuild.currentResult == 'SUCCESS')
+                    def stateVal = isSuccess ? 'success' : 'failure'
+                    def descVal = isSuccess ? 'Jenkins build passed successfully!' : 'Jenkins build failed.'
 
-                        PAYLOAD=$(jq -n --arg state "$STATE" \
-                                       --arg target_url "${BUILD_URL}console" \
-                                       --arg description "$DESC" \
+                    // 2. Pass the evaluated values directly into the script block
+                    sh """
+                        COMMIT_SHA=\$(git rev-parse HEAD)
+                        PAYLOAD=\$(jq -n --arg state "${stateVal}" \
+                                       --arg target_url "${env.BUILD_URL}console" \
+                                       --arg description "${descVal}" \
                                        --arg context "jenkins/pr-merge" \
-                                       '{state: $state, target_url: $target_url, description: $description, context: $context}')
+                                       '{state: \$state, target_url: \$target_url, description: \$description, context: \$context}')
                         
-                        curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                        curl -s -H "Authorization: token ${env.GITHUB_TOKEN}" \
                              -H "Content-Type: application/json" \
                              -X POST \
-                             -d "$PAYLOAD" \
-                             "https://api.github.com/repos/cassandrayen/demo-angular-app/statuses/${COMMIT_SHA}" || true
-                    '''
+                             -d "\$PAYLOAD" \
+                             "https://api.github.com/repos/cassandrayen/demo-angular-app/statuses/\${COMMIT_SHA}" || true
+                    """
                 }
             }
         }
