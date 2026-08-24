@@ -10,4 +10,5 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title: number = 'demo-angular-app';
+  version = 1.0.0
 }
