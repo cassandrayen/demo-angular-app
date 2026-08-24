@@ -51,22 +51,25 @@ pipeline {
             steps {
                 echo "Running PR Agent on ${env.CHANGE_URL}"
                 sh '''
-                    # 1. Create and activate a temporary Python virtual environment
-                    python3 -m venv pr-agent-env
+                    # 1. Export standard Mac paths so Jenkins can find your new Python 3.12 installation
+                    export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin
+                    
+                    # 2. Explicitly call python3.12 to create the virtual environment
+                    python3.12 -m venv pr-agent-env
                     source pr-agent-env/bin/activate
                     
-                    # 2. Upgrade pip to fix the version warning and resolve metadata correctly
-                    python3 -m pip install --upgrade pip
+                    # 3. Upgrade pip inside the new 3.12 environment
+                    python3.12 -m pip install --upgrade pip
                     
-                    # 3. Bypassing PyPI: Install directly from the official GitHub repository
+                    # 4. Install directly from the official GitHub repository
                     pip install "pr-agent @ git+https://github.com/The-PR-Agent/pr-agent.git@v0.42.0"
                     
-                    # 4. Export your required environment variables
+                    # 5. Export your required environment variables
                     export GITHUB_TOKEN=$GITHUB_TOKEN
                     export GOOGLE_AI_STUDIO.GEMINI_API_KEY=$GEMINI_API_KEY
                     export CONFIG.MODEL="gemini/gemini-3.6-flash"
                     
-                    # 5. Run the AI reviewer directly
+                    # 6. Run the AI reviewer directly
                     pr-agent --pr_url $CHANGE_URL review
                 '''
             }
