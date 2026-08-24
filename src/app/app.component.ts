@@ -9,6 +9,6 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title: number = 'demo-angular-app';
-  version = 1.0.0
+  title: string = 'demo-angular-app';
+  version = '1.0.0';
 }
