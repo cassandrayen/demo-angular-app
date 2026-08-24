@@ -73,7 +73,7 @@ pipeline {
         stage('ESLint & Code Quality') {
             steps {
                 echo 'Running linting...'
-                sh 'npx eslint . -f compact > eslint-report.txt || true'
+                sh 'npx eslint . -f stylish > eslint-report.txt || true'
                 script {
                     def lintOutput = readFile('eslint-report.txt').trim()
                     if (lintOutput) {
