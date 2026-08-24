@@ -65,7 +65,7 @@ pipeline {
                     pip install "pr-agent @ git+https://github.com/The-PR-Agent/pr-agent.git@v0.42.0"
                     
                     # 5. Export your required environment variables using DOUBLE UNDERSCORES
-                    export GITHUB_TOKEN=$GITHUB_TOKEN
+                    export GITHUB__USER_TOKEN=$GITHUB_TOKEN
                     export GOOGLE_AI_STUDIO__GEMINI_API_KEY=$GEMINI_API_KEY
                     export CONFIG__MODEL="gemini/gemini-3.6-flash"
                     
