@@ -1,19 +1,18 @@
 // @ts-check
 const eslint = require("@eslint/js");
+const { defineConfig } = require("eslint/config");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
 
-module.exports = tseslint.config(
-  // 1. Pass and spread all TypeScript recommended configs directly as flat arguments
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.stylistic,
-  // @ts-ignore: angular-eslint v18 types clash with typescript-eslint v8 types
-  ...angular.configs.tsRecommended,
-
-  // 2. Apply your custom TypeScript rules and the Angular processor
+module.exports = defineConfig([
   {
     files: ["**/*.ts"],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.recommended,
+      tseslint.configs.stylistic,
+      angular.configs.tsRecommended,
+    ],
     processor: angular.processInlineTemplates,
     rules: {
       "@angular-eslint/directive-selector": [
@@ -34,16 +33,12 @@ module.exports = tseslint.config(
       ],
     },
   },
-
-  // 3. Spread all HTML recommended configs directly as flat arguments
-  // @ts-ignore
-  ...angular.configs.templateRecommended,
-  // @ts-ignore
-  ...angular.configs.templateAccessibility,
-
-  // 4. Apply your custom HTML rules
   {
     files: ["**/*.html"],
+    extends: [
+      angular.configs.templateRecommended,
+      angular.configs.templateAccessibility,
+    ],
     rules: {},
   }
-);
+]);
