@@ -12,9 +12,26 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout & Notify GitHub') {
             steps {
                 checkout scm
+                // Send pending status directly to GitHub API
+                sh '''
+                    if [ -n "$CHANGE_ID" ]; then
+                        COMMIT_SHA=$(git rev-parse HEAD)
+                        PAYLOAD=$(jq -n --arg state "pending" \
+                                       --arg target_url "${BUILD_URL}console" \
+                                       --arg description "Jenkins build in progress..." \
+                                       --arg context "jenkins/pr-merge" \
+                                       '{state: $state, target_url: $target_url, description: $description, context: $context}')
+                        
+                        curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                             -H "Content-Type: application/json" \
+                             -X POST \
+                             -d "$PAYLOAD" \
+                             "https://api.github.com/repos/${env.CHANGE_FORK}/${env.CHANGE_TARGET}/statuses/${COMMIT_SHA}" || true
+                    fi
+                '''
             }
         }
         
@@ -51,14 +68,10 @@ pipeline {
             }
         }
 
-        // 2. ESLint runs and posts failures to GitHub if it finds errors
         stage('ESLint & Code Quality') {
             steps {
                 echo 'Running linting...'
-                sh '''
-                    # Run ESLint, save output to file, and prevent pipeline crash here
-                    npx eslint . -f compact > eslint-report.txt || true
-                '''
+                sh 'npx eslint . -f compact > eslint-report.txt || true'
                 script {
                     def lintOutput = readFile('eslint-report.txt').trim()
                     if (lintOutput) {
@@ -68,7 +81,6 @@ pipeline {
             }
             post {
                 failure {
-                    // Send output safely via GitHub API using pure bash and jq
                     sh '''
                         if [ -n "$CHANGE_ID" ] && [ -f eslint-report.txt ]; then
                             ESLINT_ERR=$(cat eslint-report.txt)
@@ -98,6 +110,36 @@ pipeline {
                 echo 'Saving the build output...'
                 archiveArtifacts artifacts: 'dist/**/*', allowEmptyArchive: true
             }
+        }
+    }
+
+    post {
+        always {
+            // Update final status (success/failure) directly on GitHub
+            sh '''
+                if [ -n "$CHANGE_ID" ]; then
+                    COMMIT_SHA=$(git rev-parse HEAD)
+                    if [ "$BUILD_STATUS" = "SUCCESS" ] || [ "$currentBuild.currentResult" = "SUCCESS" ]; then
+                        STATE="success"
+                        DESC="Jenkins build passed successfully!"
+                    else
+                        STATE="failure"
+                        DESC="Jenkins build failed."
+                    fi
+
+                    PAYLOAD=$(jq -n --arg state "$STATE" \
+                                   --arg target_url "${BUILD_URL}console" \
+                                   --arg description "$DESC" \
+                                   --arg context "jenkins/pr-merge" \
+                                   '{state: $state, target_url: $target_url, description: $description, context: $context}')
+                    
+                    curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                         -H "Content-Type: application/json" \
+                         -X POST \
+                         -d "$PAYLOAD" \
+                         "https://api.github.com/repos/${env.CHANGE_FORK}/${env.CHANGE_TARGET}/statuses/${COMMIT_SHA}" || true
+                fi
+            '''
         }
     }
 }
