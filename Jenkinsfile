@@ -46,19 +46,25 @@ pipeline {
         // NEW: AI Code Review runs only on Pull Requests
         stage('Run AI PR Review') {
             when {
-                // Jenkins automatically populates CHANGE_URL for Pull Requests
                 expression { env.CHANGE_URL != null }
             }
             steps {
                 echo "Running PR Agent on ${env.CHANGE_URL}"
-                // Run the official Docker container dynamically
                 sh '''
-                    docker run --rm \
-                    -e GITHUB_TOKEN=$GITHUB_TOKEN \
-                    -e GOOGLE_AI_STUDIO.GEMINI_API_KEY=$GEMINI_API_KEY \
-                    -e CONFIG.MODEL="gemini/gemini-3.6-flash" \
-                    codiumai/pr-agent:latest \
-                    --pr_url $CHANGE_URL review
+                    # 1. Create and activate a temporary Python virtual environment
+                    python3 -m venv pr-agent-env
+                    source pr-agent-env/bin/activate
+                    
+                    # 2. Install the official PR Agent CLI package
+                    pip install pr-agent
+                    
+                    # 3. Export your required environment variables
+                    export GITHUB_TOKEN=$GITHUB_TOKEN
+                    export GOOGLE_AI_STUDIO.GEMINI_API_KEY=$GEMINI_API_KEY
+                    export CONFIG.MODEL="gemini/gemini-3.6-flash"
+                    
+                    # 4. Run the AI reviewer directly
+                    pr-agent --pr_url $CHANGE_URL review
                 '''
             }
         }
