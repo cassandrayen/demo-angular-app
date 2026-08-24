@@ -16,22 +16,24 @@ pipeline {
             steps {
                 checkout scm
                 // Send pending status directly to GitHub API
-                sh '''
-                    if [ -n "$CHANGE_ID" ]; then
-                        COMMIT_SHA=$(git rev-parse HEAD)
-                        PAYLOAD=$(jq -n --arg state "pending" \
-                                       --arg target_url "${BUILD_URL}console" \
-                                       --arg description "Jenkins build in progress..." \
-                                       --arg context "jenkins/pr-merge" \
-                                       '{state: $state, target_url: $target_url, description: $description, context: $context}')
-                        
-                        curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                             -H "Content-Type: application/json" \
-                             -X POST \
-                             -d "$PAYLOAD" \
-                             "https://api.github.com/repos/${env.CHANGE_FORK}/${env.CHANGE_TARGET}/statuses/${COMMIT_SHA}" || true
-                    fi
-                '''
+                script {
+                    if (env.CHANGE_ID) {
+                        def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        sh """
+                            PAYLOAD=\$(jq -n --arg state "pending" \
+                                           --arg target_url "${env.BUILD_URL}console" \
+                                           --arg description "Jenkins build in progress..." \
+                                           --arg context "jenkins/pr-merge" \
+                                           '{state: \$state, target_url: \$target_url, description: \$description, context: \$context}')
+                            
+                            curl -s -H "Authorization: token ${env.GITHUB_TOKEN}" \
+                                 -H "Content-Type: application/json" \
+                                 -X POST \
+                                 -d "\$PAYLOAD" \
+                                 "https://api.github.com/repos/cassandrayen/demo-angular-app/statuses/${commitSha}" || true
+                        """
+                    }
+                }
             }
         }
         
@@ -81,19 +83,21 @@ pipeline {
             }
             post {
                 failure {
-                    sh '''
-                        if [ -n "$CHANGE_ID" ] && [ -f eslint-report.txt ]; then
-                            ESLINT_ERR=$(cat eslint-report.txt)
-                            COMMENT_BODY=$(printf "### ❌ ESLint Violations Found\\n\\`\\`\\`text\\n%s\\n\\`\\`\\`" "$ESLINT_ERR")
-                            PAYLOAD=$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')
-                            
-                            curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                                 -H "Content-Type: application/json" \
-                                 -X POST \
-                                 -d "$PAYLOAD" \
-                                 "https://api.github.com/repos/${env.CHANGE_FORK}/${env.CHANGE_TARGET}/issues/${env.CHANGE_ID}/comments" || true
-                        fi
-                    '''
+                    script {
+                        if (env.CHANGE_ID && fileExists('eslint-report.txt')) {
+                            sh """
+                                ESLINT_ERR=\$(cat eslint-report.txt)
+                                COMMENT_BODY=\$(printf "### ❌ ESLint Violations Found\\n\\`\\`\\`text\\n%s\\n\\`\\`\\`" "\$ESLINT_ERR")
+                                PAYLOAD=\$(jq -n --arg body "\$COMMENT_BODY" '{body: \$body}')
+                                
+                                curl -s -H "Authorization: token ${env.GITHUB_TOKEN}" \
+                                     -H "Content-Type: application/json" \
+                                     -X POST \
+                                     -d "\$PAYLOAD" \
+                                     "https://api.github.com/repos/cassandrayen/demo-angular-app/issues/${env.CHANGE_ID}/comments" || true
+                            """
+                        }
+                    }
                 }
             }
         }
@@ -115,31 +119,27 @@ pipeline {
 
     post {
         always {
-            // Update final status (success/failure) directly on GitHub
-            sh '''
-                if [ -n "$CHANGE_ID" ]; then
-                    COMMIT_SHA=$(git rev-parse HEAD)
-                    if [ "$BUILD_STATUS" = "SUCCESS" ] || [ "$currentBuild.currentResult" = "SUCCESS" ]; then
-                        STATE="success"
-                        DESC="Jenkins build passed successfully!"
-                    else
-                        STATE="failure"
-                        DESC="Jenkins build failed."
-                    fi
+            script {
+                if (env.CHANGE_ID) {
+                    def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    def buildState = (currentBuild.currentResult == 'SUCCESS') ? 'success' : 'failure'
+                    def buildDesc = (currentBuild.currentResult == 'SUCCESS') ? 'Jenkins build passed successfully!' : 'Jenkins build failed.'
 
-                    PAYLOAD=$(jq -n --arg state "$STATE" \
-                                   --arg target_url "${BUILD_URL}console" \
-                                   --arg description "$DESC" \
-                                   --arg context "jenkins/pr-merge" \
-                                   '{state: $state, target_url: $target_url, description: $description, context: $context}')
-                    
-                    curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                         -H "Content-Type: application/json" \
-                         -X POST \
-                         -d "$PAYLOAD" \
-                         "https://api.github.com/repos/${env.CHANGE_FORK}/${env.CHANGE_TARGET}/statuses/${COMMIT_SHA}" || true
-                fi
-            '''
+                    sh """
+                        PAYLOAD=\$(jq -n --arg state "${buildState}" \
+                                       --arg target_url "${env.BUILD_URL}console" \
+                                       --arg description "${buildDesc}" \
+                                       --arg context "jenkins/pr-merge" \
+                                       '{state: \$state, target_url: \$target_url, description: \$description, context: \$context}')
+                        
+                        curl -s -H "Authorization: token ${env.GITHUB_TOKEN}" \
+                             -H "Content-Type: application/json" \
+                             -X POST \
+                             -d "\$PAYLOAD" \
+                             "https://api.github.com/repos/cassandrayen/demo-angular-app/statuses/${commitSha}" || true
+                    """
+                }
+            }
         }
     }
 }
